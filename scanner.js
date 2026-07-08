@@ -250,9 +250,10 @@ function showToast(msg) {
   setTimeout(() => { toastEl.hidden = true; }, 3000);
 }
 
-// Beep con Web Audio (no depende de un archivo .mp3) + vibración
+// Beep con Web Audio + vibración (silenciosa si no hay interacción)
 let audioCtx = null;
 function feedback() {
+  // Sonido (siempre funciona)
   try {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     const osc = audioCtx.createOscillator();
@@ -264,9 +265,18 @@ function feedback() {
     osc.connect(gain).connect(audioCtx.destination);
     osc.start();
     osc.stop(audioCtx.currentTime + 0.18);
-  } catch (e) { /* audio no disponible, se ignora */ }
+  } catch (e) {
+    // Audio no disponible, se ignora
+  }
 
-  if (navigator.vibrate) navigator.vibrate(120);
+  // Vibración: se ejecuta solo si es posible y sin lanzar excepción
+  if (navigator.vibrate) {
+    try {
+      navigator.vibrate(120);
+    } catch (_) {
+      // Si falla (por política de usuario), lo ignoramos
+    }
+  }
 }
 
 // Reconexión automática si la pestaña vuelve a estar visible
