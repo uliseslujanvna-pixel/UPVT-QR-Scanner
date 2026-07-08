@@ -3,11 +3,10 @@
 //  Conecta con Code.gs (doPost). Requiere ?token=...&fila=...
 // =====================================================================
 
-// ⚠️ Reemplaza con tu URL de Apps Script (termina en /exec)
-const APPS_SCRIPT_URL_ORIGINAL = "https://script.google.com/macros/s/AKfycbwy7S_zRl-ubzYHS5nZxmfU6wuvcv3Qcanxabe7AW2mi8oQFMda3EPW9iRi8VBmbuKL/exec";
+// ⚠️ Reemplaza con la URL de tu Web App (termina en /exec)
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwy7S_zRl-ubzYHS5nZxmfU6wuvcv3Qcanxabe7AW2mi8oQFMda3EPW9iRi8VBmbuKL/exec";
 
-// 🔥 Proxy CORS (cors-anywhere) para evitar bloqueos
-const APPS_SCRIPT_URL = "https://cors-anywhere.herokuapp.com/" + APPS_SCRIPT_URL_ORIGINAL;
+// ⚠️ Ya NO se usa proxy; Apps Script acepta POST con text/plain sin CORS
 
 const SCAN_COOLDOWN_MS = 2500;
 const RETRY_DELAY_MS   = 4000;
@@ -109,7 +108,6 @@ function tick() {
 async function handleScan(rawValue) {
   frameEl.classList.add("locked");
   feedback();
-  // Mostrar la matrícula detectada en la interfaz
   showResult("pending", "Matrícula: " + rawValue, "Registrando…");
   await registrar(rawValue);
   setTimeout(() => frameEl.classList.remove("locked"), 700);
@@ -132,7 +130,7 @@ addToPadronBtn.addEventListener("click", async () => {
   await registrar(matricula, nombre.trim(), true);
 });
 
-// ── Comunicación con Apps Script ───────────────────────────────────
+// ── Comunicación con Apps Script (directo, sin proxy) ─────────────
 async function callBackend(accion, extra) {
   const body = JSON.stringify({ accion, token: TOKEN, fila: FILA, ...extra });
   const res = await fetch(APPS_SCRIPT_URL, {
@@ -140,6 +138,13 @@ async function callBackend(accion, extra) {
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body
   });
+
+  // Si la respuesta no es OK, intentamos leer el texto de error
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Servidor respondió con error (${res.status}): ${text.substring(0, 100)}`);
+  }
+
   const json = await res.json();
   if (!json.ok) throw new Error(json.error || "Error desconocido del servidor.");
   return json.data;
@@ -211,8 +216,8 @@ document.getElementById("finishBtn").addEventListener("click", () => {
   try {
     window.close();
   } catch (e) {
-    const fallbackUrl = "https://script.google.com/macros/s/AKfycbwy7S_zRl-ubzYHS5nZxmfU6wuvcv3Qcanxabe7AW2mi8oQFMda3EPW9iRi8VBmbuKL/exec";
-    window.location.href = fallbackUrl;
+    // Redirige a la URL de la Web App (o a la página que prefieras)
+    window.location.href = APPS_SCRIPT_URL;
   }
 });
 
