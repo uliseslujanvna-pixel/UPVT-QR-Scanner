@@ -1,12 +1,10 @@
 // =====================================================================
 //  UPVT · Escáner QR de asistencia — scanner.js
-//  Conecta con Code.gs (doPost). Requiere ?token=...&fila=...
 // =====================================================================
 
 // ⚠️ Reemplaza con la URL de tu Web App (termina en /exec)
+// Asegúrate de que esté publicada como "Cualquier persona"
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwy7S_zRl-ubzYHS5nZxmfU6wuvcv3Qcanxabe7AW2mi8oQFMda3EPW9iRi8VBmbuKL/exec";
-
-// ⚠️ Ya NO se usa proxy; Apps Script acepta POST con text/plain sin CORS
 
 const SCAN_COOLDOWN_MS = 2500;
 const RETRY_DELAY_MS   = 4000;
@@ -130,7 +128,7 @@ addToPadronBtn.addEventListener("click", async () => {
   await registrar(matricula, nombre.trim(), true);
 });
 
-// ── Comunicación con Apps Script (directo, sin proxy) ─────────────
+// ── Comunicación con Apps Script (directo) ────────────────────────
 async function callBackend(accion, extra) {
   const body = JSON.stringify({ accion, token: TOKEN, fila: FILA, ...extra });
   const res = await fetch(APPS_SCRIPT_URL, {
@@ -145,7 +143,15 @@ async function callBackend(accion, extra) {
     throw new Error(`Servidor respondió con error (${res.status}): ${text.substring(0, 100)}`);
   }
 
-  const json = await res.json();
+  // Intentar parsear JSON
+  let json;
+  try {
+    json = await res.json();
+  } catch (e) {
+    const text = await res.text();
+    throw new Error(`Respuesta no es JSON válido: ${text.substring(0, 100)}`);
+  }
+
   if (!json.ok) throw new Error(json.error || "Error desconocido del servidor.");
   return json.data;
 }
@@ -216,7 +222,6 @@ document.getElementById("finishBtn").addEventListener("click", () => {
   try {
     window.close();
   } catch (e) {
-    // Redirige a la URL de la Web App (o a la página que prefieras)
     window.location.href = APPS_SCRIPT_URL;
   }
 });
