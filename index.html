@@ -1,53 +1,99 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
 <meta charset="UTF-8">
-<title>Prueba API</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>
+Scanner QR UPVT
+</title>
+
+<link rel="stylesheet" href="style.css">
+
 </head>
+
 
 <body>
 
-<h1>Prueba API Apps Script</h1>
 
-<button onclick="probarAPI()">
-Probar conexión
-</button>
+<div class="container">
 
-<pre id="resultado"></pre>
 
-<script>
+<header>
 
-async function probarAPI(){
+<img src="assets/logo.png" id="logo">
 
-const url="https://script.google.com/macros/s/AKfycbwlILgqyqL7rejSvtIV9qL7qLzCAkeVuIrZLhmpJz8VpPGtPohaoECnCrfUBOUb3GJL7Q/exec";
+<h1>
+Control de Asistencia
+</h1>
 
-try{
+<p>
+Universidad Politécnica del Valle de Toluca
+</p>
 
-const response=await fetch(url,{
-method:"POST",
-headers:{
-"Content-Type":"text/plain;charset=utf-8"
-},
-body:JSON.stringify({
-accion:"ping"
-})
-});
+</header>
 
-const texto=await response.text();
 
-document.getElementById("resultado").textContent=texto;
 
-}catch(error){
+<section class="scanner-box">
 
-document.getElementById("resultado").textContent=error;
 
-console.error(error);
+<video id="video" autoplay playsinline></video>
 
-}
 
-}
+<div class="scanner-frame"></div>
 
-</script>
+
+</section>
+
+
+
+<div id="status">
+
+Esperando QR...
+
+</div>
+
+
+
+<div id="result">
+
+</div>
+
+
+
+<div class="info">
+
+
+<div>
+
+<h3 id="contador">
+0
+</h3>
+
+<p>
+Alumnos registrados
+</p>
+
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+
+<script src="scanner.js"></script>
+
 
 </body>
+
 </html>
