@@ -1,99 +1,60 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>
-Scanner QR UPVT
-</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>UPVT · Lista de asistencia QR</title>
 <link rel="stylesheet" href="style.css">
-
 </head>
-
-
 <body>
 
+  <header class="topbar">
+    <div class="topbar__id">
+      <img src="assets/logo.png" alt="" class="topbar__logo" onerror="this.style.display='none'">
+      <div>
+        <p class="topbar__title">Lista de asistencia</p>
+        <p class="topbar__sub" id="contextLabel">Cargando reserva…</p>
+      </div>
+    </div>
+    <div class="topbar__status" id="connStatus" data-state="checking">
+      <span class="dot"></span><span class="txt">Conectando</span>
+    </div>
+  </header>
 
-<div class="container">
+  <main class="stage">
 
+    <section class="camera-wrap">
+      <video id="video" playsinline autoplay muted></video>
+      <canvas id="canvas" hidden></canvas>
 
-<header>
+      <div class="frame" id="frame">
+        <span class="corner tl"></span><span class="corner tr"></span>
+        <span class="corner bl"></span><span class="corner br"></span>
+        <span class="scanline"></span>
+      </div>
 
-<img src="assets/logo.png" id="logo">
+      <button id="switchCam" class="icon-btn cam-toggle" title="Cambiar cámara" aria-label="Cambiar cámara">⟳</button>
+    </section>
 
-<h1>
-Control de Asistencia
-</h1>
+    <section class="result" id="resultCard" data-state="idle">
+      <p class="result__eyebrow" id="resultState">Apunta la cámara a la credencial</p>
+      <p class="result__name" id="resultName">—</p>
+      <p class="result__meta" id="resultMeta">&nbsp;</p>
+    </section>
 
-<p>
-Universidad Politécnica del Valle de Toluca
-</p>
+    <footer class="counter-bar">
+      <div class="counter">
+        <span class="counter__num" id="counterNum">0</span>
+        <span class="counter__label">registrados</span>
+      </div>
+      <button id="manualBtn" class="text-btn">Ingresar matrícula manualmente</button>
+    </footer>
 
-</header>
+  </main>
 
+  <div class="toast" id="toast" hidden></div>
 
-
-<section class="scanner-box">
-
-
-<video id="video" autoplay playsinline></video>
-
-
-<div class="scanner-frame"></div>
-
-
-</section>
-
-
-
-<div id="status">
-
-Esperando QR...
-
-</div>
-
-
-
-<div id="result">
-
-</div>
-
-
-
-<div class="info">
-
-
-<div>
-
-<h3 id="contador">
-0
-</h3>
-
-<p>
-Alumnos registrados
-</p>
-
-
-</div>
-
-
-</div>
-
-
-
-</div>
-
-
-
-<script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-
-<script src="scanner.js"></script>
-
-
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+  <script src="scanner.js"></script>
 </body>
-
 </html>
