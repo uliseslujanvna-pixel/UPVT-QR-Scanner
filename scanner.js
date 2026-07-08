@@ -13,7 +13,7 @@ const RETRY_DELAY_MS   = 4000;   // reintento tras fallo de red
 // ── Estado ─────────────────────────────────────────────────────────
 const params   = new URLSearchParams(window.location.search);
 const TOKEN    = params.get("token");
-const FILA     = Number(params.get("fila"));   // ← antes: params.get("fila") (string)
+const FILA     = Number(params.get("fila"));
 
 let stream = null;
 let facingMode = "environment";
@@ -37,12 +37,13 @@ const connStatus    = document.getElementById("connStatus");
 const switchCamBtn  = document.getElementById("switchCam");
 const manualBtn     = document.getElementById("manualBtn");
 const toastEl       = document.getElementById("toast");
+const addToPadronBtn= document.getElementById("addToPadronBtn");
 
 // ── Arranque ───────────────────────────────────────────────────────
 init();
 
 async function init() {
-  if (!TOKEN || !FILA || Number.isNaN(FILA)) {   // ← se agregó Number.isNaN(FILA)
+  if (!TOKEN || !FILA || Number.isNaN(FILA)) {
     setConn("error", "Sin sesión");
     contextLabel.textContent = "Falta token o fila. Abre este escáner desde el Dashboard.";
     showResult("error", "Enlace incompleto", "Regresa al Dashboard y genera el enlace de la reserva de nuevo.");
@@ -117,9 +118,22 @@ manualBtn.addEventListener("click", () => {
   if (matricula && matricula.trim()) handleScan(matricula.trim());
 });
 
+// ── Botón "Agregar al padrón" ──────────────────────────────────────
+addToPadronBtn.addEventListener("click", async () => {
+  const matricula = addToPadronBtn.dataset.matricula;
+  if (!matricula) return;
+  const nombre = prompt("Ingresa el nombre completo del alumno:", "");
+  if (!nombre || !nombre.trim()) {
+    showToast("Nombre requerido para agregar al padrón.");
+    return;
+  }
+  // Intentar registrar de nuevo enviando el nombre (el backend lo crea si no existe)
+  await registrar(matricula, nombre.trim(), true);
+});
+
 // ── Comunicación con Apps Script ───────────────────────────────────
 // Se envía como text/plain (no application/json) para evitar el
-// preflight CORS que Apps Script no soporta — mismo criterio que doPost().
+// preflight CORS que Apps Script no soporta.
 async function callBackend(accion, extra) {
   const body = JSON.stringify({ accion, token: TOKEN, fila: FILA, ...extra });
   const res = await fetch(APPS_SCRIPT_URL, {
@@ -145,17 +159,36 @@ async function bootstrapSesion() {
   }
 }
 
-async function registrar(matricula) {
+// ── Registrar asistencia (con soporte para alta automática) ───────
+async function registrar(matricula, nombre = null, esReintento = false) {
   pendingRequest = true;
+  addToPadronBtn.style.display = "none";
+
   try {
-    const data = await callBackend("registrarAsistenciaQR", { matricula });
+    const payload = { matricula };
+    if (nombre) payload.nombre = nombre;
+    const data = await callBackend("registrarAsistenciaQR", payload);
     setConn("ok", "Conectado");
     counterNum.textContent = data.total;
 
+    // Si el alumno no fue encontrado en el padrón
+    if (!data.encontrado) {
+      // Si ya es un reintento con nombre, significa que el backend no pudo crear al alumno
+      if (esReintento) {
+        showResult("error", "No se pudo agregar al padrón", "Verifica que el nombre sea válido.");
+        return;
+      }
+      // Mostrar opción para agregar al padrón
+      showResult("dup", data.matricula, "No está en el padrón de alumnos.");
+      // Guardar la matrícula para usarla al hacer clic en el botón
+      addToPadronBtn.dataset.matricula = matricula;
+      addToPadronBtn.style.display = "inline-block";
+      return;
+    }
+
+    // Si es duplicado
     if (data.duplicado) {
       showResult("dup", data.nombre, "Ya estaba registrado — " + data.matricula);
-    } else if (!data.encontrado) {
-      showResult("dup", data.matricula, "Registrado, pero no está en el padrón de alumnos.");
     } else {
       showResult("ok", data.nombre, "Matrícula " + data.matricula + " · asistencia registrada");
     }
@@ -179,6 +212,19 @@ function scheduleRetry(matricula) {
     }
   }, RETRY_DELAY_MS);
 }
+
+// ── Botón "Terminar lista" ──────────────────────────────────────────
+document.getElementById("finishBtn").addEventListener("click", () => {
+  // Intenta cerrar la pestaña
+  try {
+    window.close();
+  } catch (e) {
+    // Si no se puede, redirige a la URL de Apps Script (o a la página de inicio)
+    // Puedes cambiar esta URL por la de tu sistema de reservas
+    const fallbackUrl = "https://script.google.com/macros/s/AKfycbwlILgqyqL7rejSvtIV9qL7qLzCAkeVuIrZLhmpJz8VpPGtPohaoECnCrfUBOUb3GJL7Q/exec";
+    window.location.href = fallbackUrl;
+  }
+});
 
 // ── UI helpers ─────────────────────────────────────────────────────
 function showResult(state, name, meta) {
