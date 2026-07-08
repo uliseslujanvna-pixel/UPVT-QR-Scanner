@@ -13,7 +13,7 @@ const RETRY_DELAY_MS   = 4000;   // reintento tras fallo de red
 // ── Estado ─────────────────────────────────────────────────────────
 const params   = new URLSearchParams(window.location.search);
 const TOKEN    = params.get("token");
-const FILA     = params.get("fila");
+const FILA     = Number(params.get("fila"));   // ← antes: params.get("fila") (string)
 
 let stream = null;
 let facingMode = "environment";
@@ -42,7 +42,7 @@ const toastEl       = document.getElementById("toast");
 init();
 
 async function init() {
-  if (!TOKEN || !FILA) {
+  if (!TOKEN || !FILA || Number.isNaN(FILA)) {   // ← se agregó Number.isNaN(FILA)
     setConn("error", "Sin sesión");
     contextLabel.textContent = "Falta token o fila. Abre este escáner desde el Dashboard.";
     showResult("error", "Enlace incompleto", "Regresa al Dashboard y genera el enlace de la reserva de nuevo.");
