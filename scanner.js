@@ -4,8 +4,8 @@
 //  ?token=SESSION_TOKEN&fila=NUMERO_FILA  (enlace generado por el Dashboard)
 // =====================================================================
 
-// ⚠️ Reemplaza con la URL de tu Web App (la misma que devuelve getWebAppUrl()):
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwlILgqyqL7rejSvtIV9qL7qLzCAkeVuIrZLhmpJz8VpPGtPohaoECnCrfUBOUb3GJL7Q/exec";
+// ✅ Reemplaza con la URL de tu Web App (la misma que devuelve getWebAppUrl()):
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwy7S_zRl-ubzYHS5nZxmfU6wuvcv3Qcanxabe7AW2mi8oQFMda3EPW9iRi8VBmbuKL/exec";
 
 const SCAN_COOLDOWN_MS = 2500;   // evita reenviar el mismo QR de inmediato
 const RETRY_DELAY_MS   = 4000;   // reintento tras fallo de red
@@ -250,7 +250,7 @@ function showToast(msg) {
   setTimeout(() => { toastEl.hidden = true; }, 3000);
 }
 
-// Beep con Web Audio + vibración (silenciosa si no hay interacción)
+// ✅ Beep con Web Audio + vibración (silenciosa si no hay interacción)
 let audioCtx = null;
 function feedback() {
   // Sonido (siempre funciona)
