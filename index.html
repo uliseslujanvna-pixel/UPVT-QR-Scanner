@@ -4,18 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>UPVT · Lista de asistencia QR</title>
-  <!-- ✅ Evita error 404 del favicon -->
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
-
   <header class="topbar">
     <div class="topbar__id">
-      <img src="assets/logo.png" alt="" class="topbar__logo" onerror="this.style.display='none'">
+      <span class="topbar__logo" style="font-size:24px; line-height:1;">🏫</span>
       <div>
         <p class="topbar__title">Lista de asistencia</p>
         <p class="topbar__sub" id="contextLabel">Cargando reserva…</p>
@@ -27,25 +22,21 @@
   </header>
 
   <main class="stage">
-
     <section class="camera-wrap">
       <video id="video" playsinline autoplay muted></video>
       <canvas id="canvas" hidden></canvas>
-
       <div class="frame" id="frame">
         <span class="corner tl"></span><span class="corner tr"></span>
         <span class="corner bl"></span><span class="corner br"></span>
         <span class="scanline"></span>
       </div>
-
-      <button id="switchCam" class="icon-btn cam-toggle" title="Cambiar cámara" aria-label="Cambiar cámara">⟳</button>
+      <button id="switchCam" class="icon-btn cam-toggle" title="Cambiar cámara">⟳</button>
     </section>
 
     <section class="result" id="resultCard" data-state="idle">
       <p class="result__eyebrow" id="resultState">Apunta la cámara a la credencial</p>
       <p class="result__name" id="resultName">—</p>
       <p class="result__meta" id="resultMeta">&nbsp;</p>
-      <!-- Botón para agregar al padrón cuando no se encuentra -->
       <button id="addToPadronBtn" class="text-btn" style="display:none; margin-top:8px; color: var(--accent); font-weight:600;">
         <i>➕</i> Agregar al padrón y registrar
       </button>
@@ -61,7 +52,6 @@
         <button id="finishBtn" class="text-btn" style="color: var(--danger); font-weight:600;">✕ Terminar lista</button>
       </div>
     </footer>
-
   </main>
 
   <div class="toast" id="toast" hidden></div>
