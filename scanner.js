@@ -1,10 +1,13 @@
 // =====================================================================
 //  UPVT · Escáner QR de asistencia — scanner.js
+//  CON PROXY CORS (corsproxy.io) para evitar bloqueos
 // =====================================================================
 
 // ⚠️ Reemplaza con la URL de tu Web App (termina en /exec)
-// Asegúrate de que esté publicada como "Cualquier persona"
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwy7S_zRl-ubzYHS5nZxmfU6wuvcv3Qcanxabe7AW2mi8oQFMda3EPW9iRi8VBmbuKL/exec";
+const APPS_SCRIPT_URL_ORIGINAL = "https://script.google.com/macros/s/AKfycbwy7S_zRl-ubzYHS5nZxmfU6wuvcv3Qcanxabe7AW2mi8oQFMda3EPW9iRi8VBmbuKL/exec";
+
+// 🔥 Proxy CORS que añade Access-Control-Allow-Origin
+const APPS_SCRIPT_URL = "https://corsproxy.io/?" + encodeURIComponent(APPS_SCRIPT_URL_ORIGINAL);
 
 const SCAN_COOLDOWN_MS = 2500;
 const RETRY_DELAY_MS   = 4000;
@@ -106,7 +109,7 @@ function tick() {
 async function handleScan(rawValue) {
   frameEl.classList.add("locked");
   feedback();
-  showResult("pending", "Matrícula: " + rawValue, "Registrando…");
+  showResult("pending", "🔍 " + rawValue, "Verificando en el padrón...");
   await registrar(rawValue);
   setTimeout(() => frameEl.classList.remove("locked"), 700);
 }
@@ -125,35 +128,38 @@ addToPadronBtn.addEventListener("click", async () => {
     showToast("Nombre requerido para agregar al padrón.");
     return;
   }
+  showResult("pending", "➕ " + matricula, "Agregando al padrón...");
   await registrar(matricula, nombre.trim(), true);
 });
 
-// ── Comunicación con Apps Script (directo) ────────────────────────
+// ── Comunicación con Apps Script a través del proxy ────────────────
 async function callBackend(accion, extra) {
   const body = JSON.stringify({ accion, token: TOKEN, fila: FILA, ...extra });
-  const res = await fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body
-  });
-
-  // Si la respuesta no es OK, intentamos leer el texto de error
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Servidor respondió con error (${res.status}): ${text.substring(0, 100)}`);
-  }
-
-  // Intentar parsear JSON
-  let json;
+  
   try {
-    json = await res.json();
-  } catch (e) {
-    const text = await res.text();
-    throw new Error(`Respuesta no es JSON válido: ${text.substring(0, 100)}`);
-  }
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body
+    });
 
-  if (!json.ok) throw new Error(json.error || "Error desconocido del servidor.");
-  return json.data;
+    // Si el proxy devuelve error, intentamos leer el mensaje
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Error ${res.status}: ${text.substring(0, 150)}`);
+    }
+
+    // Intentar parsear JSON
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || "Error desconocido del servidor.");
+    return json.data;
+  } catch (err) {
+    // Si el error es de parseo JSON, mostramos el texto recibido
+    if (err instanceof SyntaxError) {
+      throw new Error("El servidor no devolvió JSON. Verifica la URL de la Web App y que esté publicada.");
+    }
+    throw err;
+  }
 }
 
 async function bootstrapSesion() {
@@ -163,6 +169,7 @@ async function bootstrapSesion() {
     setConn("ok", "Conectado");
     const asistencia = await callBackend("getAsistenciaReserva");
     counterNum.textContent = asistencia.total;
+    console.log("📊 Asistencias cargadas:", asistencia.total);
   } catch (err) {
     setConn("error", "Sin conexión");
     showResult("error", "No se pudo validar la sesión", err.message);
@@ -173,6 +180,10 @@ async function registrar(matricula, nombre = null, esReintento = false) {
   pendingRequest = true;
   addToPadronBtn.style.display = "none";
 
+  if (!esReintento && !nombre) {
+    showResult("pending", "📋 " + matricula, "Registrando asistencia...");
+  }
+
   try {
     const payload = { matricula };
     if (nombre) payload.nombre = nombre;
@@ -182,23 +193,23 @@ async function registrar(matricula, nombre = null, esReintento = false) {
 
     if (!data.encontrado) {
       if (esReintento) {
-        showResult("error", "No se pudo agregar al padrón", "Verifica que el nombre sea válido.");
+        showResult("error", "❌ " + data.matricula, "No se pudo agregar al padrón. Verifica el nombre.");
         return;
       }
-      showResult("dup", data.matricula, "No está en el padrón de alumnos.");
+      showResult("dup", "👤 " + data.matricula, "No está en el padrón de alumnos.");
       addToPadronBtn.dataset.matricula = matricula;
       addToPadronBtn.style.display = "inline-block";
       return;
     }
 
     if (data.duplicado) {
-      showResult("dup", data.nombre, "Ya estaba registrado — " + data.matricula);
+      showResult("dup", "♻️ " + data.nombre, "Ya estaba registrado — " + data.matricula);
     } else {
-      showResult("ok", data.nombre, "Matrícula " + data.matricula + " · asistencia registrada");
+      showResult("ok", "✅ " + data.nombre, "Matrícula " + data.matricula + " · asistencia registrada");
     }
   } catch (err) {
     setConn("error", "Sin conexión");
-    showResult("error", "No se pudo registrar", err.message);
+    showResult("error", "❌ Error", err.message);
     scheduleRetry(matricula);
   } finally {
     pendingRequest = false;
@@ -222,7 +233,7 @@ document.getElementById("finishBtn").addEventListener("click", () => {
   try {
     window.close();
   } catch (e) {
-    window.location.href = APPS_SCRIPT_URL;
+    window.location.href = APPS_SCRIPT_URL_ORIGINAL;
   }
 });
 
@@ -230,10 +241,10 @@ document.getElementById("finishBtn").addEventListener("click", () => {
 function showResult(state, name, meta) {
   resultCard.dataset.state = state === "pending" ? "" : state;
   resultState.textContent = {
-    ok: "Asistencia registrada",
-    dup: "Atención",
-    error: "Error",
-    pending: "Procesando…"
+    ok: "✅ Asistencia registrada",
+    dup: "⚠️ Atención",
+    error: "❌ Error",
+    pending: "⏳ Procesando…"
   }[state] || "";
   resultName.textContent = name;
   resultMeta.textContent = meta || "";
