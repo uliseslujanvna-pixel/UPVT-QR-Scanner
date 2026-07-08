@@ -5,7 +5,7 @@
 // =====================================================================
 
 // ⚠️ Reemplaza con la URL de tu Web App (la misma que devuelve getWebAppUrl()):
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/TU_DEPLOYMENT_ID/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwlILgqyqL7rejSvtIV9qL7qLzCAkeVuIrZLhmpJz8VpPGtPohaoECnCrfUBOUb3GJL7Q/exec";
 
 const SCAN_COOLDOWN_MS = 2500;   // evita reenviar el mismo QR de inmediato
 const RETRY_DELAY_MS   = 4000;   // reintento tras fallo de red
