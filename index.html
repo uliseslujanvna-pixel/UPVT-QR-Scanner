@@ -40,6 +40,10 @@
       <p class="result__eyebrow" id="resultState">Apunta la cámara a la credencial</p>
       <p class="result__name" id="resultName">—</p>
       <p class="result__meta" id="resultMeta">&nbsp;</p>
+      <!-- Botón para agregar al padrón cuando no se encuentra -->
+      <button id="addToPadronBtn" class="text-btn" style="display:none; margin-top:8px; color: var(--accent); font-weight:600;">
+        <i>➕</i> Agregar al padrón y registrar
+      </button>
     </section>
 
     <footer class="counter-bar">
@@ -47,7 +51,10 @@
         <span class="counter__num" id="counterNum">0</span>
         <span class="counter__label">registrados</span>
       </div>
-      <button id="manualBtn" class="text-btn">Ingresar matrícula manualmente</button>
+      <div style="display:flex; gap:12px;">
+        <button id="manualBtn" class="text-btn">Ingresar matrícula manualmente</button>
+        <button id="finishBtn" class="text-btn" style="color: var(--danger); font-weight:600;">✕ Terminar lista</button>
+      </div>
     </footer>
 
   </main>
